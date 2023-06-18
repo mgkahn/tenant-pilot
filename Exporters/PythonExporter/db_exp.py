@@ -56,6 +56,18 @@ def oracle_connect(config):
 
     return(conn)
 
+def bigquery_connect(config):  
+# pyodbc replaced with native BQ DBAPI
+
+#Authentication
+    key_path = config.get('bigquery','oauthpvtkeypath')
+    credentials = service_account.Credentials.from_service_account_file(
+         key_path,scopes=["https://www.googleapis.com/auth/cloud-platform"],
+         )
+    client = bigquery.Client(credentials=credentials, project=credentials.project_id)     
+    conn = dbapi.Connection(client)
+    return(conn)
+
 def parse_sql(sql_fname,sql_params):
     exports = []
     output_file_tag = "OUTPUT_FILE:"
@@ -167,14 +179,14 @@ def db_export_validate(conn, sql, csvwriter, arraysize, write_mode, debug):
 def test_env(database=None, sftp=None):
     import subprocess
     import sys
-    db_req_packages = {'oracle': 'cx-Oracle', 'mssql': 'pyodbc', 'postgres': 'psycopg2'} # DB Specific Packages
+    db_req_packages = {'oracle': 'cx-Oracle', 'mssql': 'pyodbc', 'postgres': 'psycopg2', 'bigquery': 'google-cloud-bigquery'} # DB Specific Packages
     reqs = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze'])
     installed_packages = [r.decode().split('==')[0] for r in reqs.split()]
 
     err_mess = ''
     if database != None: #test db packages
         if database not in db_req_packages:
-            err_mess = err_mess + "Invalid database type, use mssql, oracle, or postgres\n"
+            err_mess = err_mess + "Invalid database type, use mssql, oracle, postgre, or bigquerys\n"
         else:
             if db_req_packages[database] not in installed_packages:
                 err_mess = err_mess + "Package not installed for database connection: {}\n".format(db_req_packages[database])
@@ -255,8 +267,13 @@ elif database == 'mssql':
 elif database == 'postgres':
     import psycopg2
     db_conn = postgres_connect(config)
+elif database == 'bigquery':
+    from google.cloud import bigquery
+    from google.cloud.bigquery import dbapi
+    from google.oauth2 import service_account
+    db_conn = bigquery_connect(config)
 elif database != None:
-    print("Invalid database type, use mssql, oracle, or postgres")
+    print("Invalid database type, use mssql, oracle, postgres, or bigquery")
     exit(-1)
 
 # PHENOTYPE #
