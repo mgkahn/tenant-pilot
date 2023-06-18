@@ -26,24 +26,24 @@ select
    '@contactEmail' as CONTACT_EMAIL,
    '@cdmName' as CDM_NAME,
    '@cdmVersion' as CDM_VERSION,
-   (SELECT vocabulary_version FROM @resultsDatabaseSchema.N3C_PRE_COHORT LIMIT 1) AS VOCABULARY_VERSION,
+   (SELECT vocabulary_version FROM @cdmDatabaseSchema.cdm_source) AS VOCABULARY_VERSION,
    null as N3C_PHENOTYPE_YN,
    null as N3C_PHENOTYPE_VERSION,
    '@shiftDateYN' as SHIFT_DATE_YN,
    '@maxNumShiftDays' as MAX_NUM_SHIFT_DAYS,
-   CAST(GETDATE() as datetime) as RUN_DATE,
---   CAST( DATEADD(day, -@dataLatencyNumDays, GETDATE()) as datetime) as UPDATE_DATE,	--change integer based on your site's data latency
-   CAST(DATE_ADD(GETDATE(), INTERVAL -@dataLatencyNumDays DAY) as datetime) as UPDATE_DATE,
---   CAST( DATEADD(day, @daysBetweenSubmissions, GETDATE()) as datetime) as NEXT_SUBMISSION_DATE
-   CAST(DATE_ADD(GETDATE(), INTERVAL @daysBetweenSubmissions DAY) as datetime) as NEXT_SUBMISSION_DATE;
+   CAST(CURRENT_DATE() as datetime) as RUN_DATE,
+--   CAST( DATEADD(day, -@dataLatencyNumDays, CURRENT_DATE()) as datetime) as UPDATE_DATE,	--change integer based on your site's data latency
+   CAST(DATE_ADD(CURRENT_DATE(), INTERVAL -@dataLatencyNumDays DAY) as datetime) as UPDATE_DATE,
+--   CAST( DATEADD(day, @daysBetweenSubmissions, CURRENT_DATE()) as datetime) as NEXT_SUBMISSION_DATE
+   CAST(DATE_ADD(CURRENT_DATE(), INTERVAL @daysBetweenSubmissions DAY) as datetime) as NEXT_SUBMISSION_DATE;
 
 --PERSON
 --OUTPUT_FILE: PERSON.csv
 SELECT
    p.PERSON_ID,
    GENDER_CONCEPT_ID,
-   ISNULL(YEAR_OF_BIRTH, DATEPART(year, birth_datetime )) as YEAR_OF_BIRTH,
-   ISNULL(MONTH_OF_BIRTH, DATEPART(month, birth_datetime)) as MONTH_OF_BIRTH,
+   IFNULL(YEAR_OF_BIRTH, EXTRACT(year from birth_datetime )) as YEAR_OF_BIRTH,
+   IFNULL(MONTH_OF_BIRTH, EXTRACT(month from birth_datetime)) as MONTH_OF_BIRTH,
    RACE_CONCEPT_ID,
    ETHNICITY_CONCEPT_ID,
    LOCATION_ID,
