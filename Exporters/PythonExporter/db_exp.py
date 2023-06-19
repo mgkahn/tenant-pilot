@@ -140,7 +140,7 @@ def db_export(conn, sql, csvwriter, arraysize, write_mode, debug):
         print("Execute SQL -----------------------------")
         print(sql)
         print("-----------------------------------------")
-    cursor.execute(sql);
+    cursor.execute(sql,job_config=job_config);
     header = [column[0] for column in cursor.description]
     if write_mode == 'w':
         csvwriter.writerow(header)
@@ -156,13 +156,13 @@ def db_export(conn, sql, csvwriter, arraysize, write_mode, debug):
 
 def db_export_validate(conn, sql, csvwriter, arraysize, write_mode, debug):
     cursor=conn.cursor()
-    cursor.arraysize = 100
+    cursor.arraysize = arraysize
 
     if debug == True:
         print("Execute SQL -----------------------------")
         print(sql)
         print("-----------------------------------------")
-    cursor.execute(sql);
+    cursor.execute(sql,job_config=job_config);
     header = [column[0] for column in cursor.description]
     if write_mode == 'w':
         csvwriter.writerow(header)
@@ -257,6 +257,9 @@ sql_params = [
     {'tag': '@maxNumShiftDays', 'value': config['site']['max_num_shift_days']}
 ]
 
+# MGK: New argument to cursor.execute(). Used by Google for temp storage very large extracts
+
+job_config=''
 
 if database == 'oracle':
     import cx_Oracle
@@ -272,6 +275,7 @@ elif database == 'bigquery':
     from google.cloud.bigquery import dbapi
     from google.oauth2 import service_account
     db_conn = bigquery_connect(config)
+    job_config = bigquery.QueryJobConfig(destination=config['site']['results_database_schema'] + ".n3c_extract_tmp", write_disposition="WRITE_TRUNCATE")
 elif database != None:
     print("Invalid database type, use mssql, oracle, postgres, or bigquery")
     exit(-1)
