@@ -5,6 +5,7 @@ import argparse
 import datetime
 import shutil
 
+
     
 def postgres_connect(config):
     host = config['postgres']['host']
@@ -274,8 +275,11 @@ elif database == 'bigquery':
     from google.cloud import bigquery
     from google.cloud.bigquery import dbapi
     from google.oauth2 import service_account
+    import random
+    import string
     db_conn = bigquery_connect(config)
-    job_config = bigquery.QueryJobConfig(destination=config['site']['results_database_schema'] + ".n3c_extract_tmp", write_disposition="WRITE_TRUNCATE")
+    temp_table = config['site']['results_database_schema'] + '.tmp_' + ''.join(random.choice(string.ascii_lowercase) for i in range(15))
+    job_config = bigquery.QueryJobConfig(destination=temp_table, write_disposition="WRITE_TRUNCATE")
 elif database != None:
     print("Invalid database type, use mssql, oracle, postgres, or bigquery")
     exit(-1)
